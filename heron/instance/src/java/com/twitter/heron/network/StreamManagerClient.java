@@ -216,6 +216,7 @@ public class StreamManagerClient extends HeronClient {
       if (getOutstandingPackets() == 0) {
         // In order to avoid packets back up in Client side,
         // We would poll message from queue and send them only when there are no outstanding packets
+        // Does it need a threshold in case of long time poll?
         while (!outStreamQueue.isEmpty()) {
           HeronTuples.HeronTupleSet tupleSet = outStreamQueue.poll();
           StreamManager.TupleMessage msg = StreamManager.TupleMessage.newBuilder()

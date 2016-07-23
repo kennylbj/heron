@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 
+
 /**
  * A WakeableLooper is a class that could:
  * Block the thread when doWait() is called and unblock
@@ -51,12 +52,15 @@ public abstract class WakeableLooper {
   // We will also multiple 1000*1000 to convert mill-seconds to nano-seconds
   private static final long INFINITE_FUTURE = Integer.MAX_VALUE;
   private volatile boolean exitLoop;
+  // The looper created thread id.
+  private final long tid;
 
   public WakeableLooper() {
     exitLoop = false;
     tasksOnWakeup = new ArrayList<Runnable>();
     timers = new PriorityQueue<TimerTask>();
     exitTasks = new ArrayList<>();
+    tid = Thread.currentThread().getId();
   }
 
   public void loop() {
@@ -101,9 +105,12 @@ public abstract class WakeableLooper {
     registerTimerEventInNanoSeconds(timerInSeconds * Constants.SECONDS_TO_NANOSECONDS, task);
   }
 
+  // We must guarantee that this method only be inveked in NIOLooper thread
+  // since timers is never being synchronized.
   public void registerTimerEventInNanoSeconds(long timerInNanoSecnods, Runnable task) {
     assert timerInNanoSecnods >= 0;
     assert task != null;
+    assertInLoopThread();
     long expirationNs = System.nanoTime() + timerInNanoSecnods;
     timers.add(new TimerTask(expirationNs, task));
   }
@@ -111,6 +118,17 @@ public abstract class WakeableLooper {
   public void exitLoop() {
     exitLoop = true;
     wakeUp();
+  }
+
+  public boolean isInLoopThread() {
+    return tid == Thread.currentThread().getId();
+  }
+
+  public void assertInLoopThread() {
+    if (!isInLoopThread()) {
+      throw new IllegalStateException("Wakeable Looper was created in thread " + tid
+          + " , current thread id is " + Thread.currentThread().getId());
+    }
   }
 
   /**
@@ -131,6 +149,7 @@ public abstract class WakeableLooper {
     }
     return nextTimeoutIntervalMs;
   }
+
 
   private void executeTasksOnWakeup() {
     // Be careful here we could not use iterator, since it is possible that we may

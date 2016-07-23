@@ -121,3 +121,6 @@ website/node_modules/
 website/public/
 website/static/
 /bin/
+
+# for lbj
+lbj.md

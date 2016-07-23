@@ -78,6 +78,7 @@ public abstract class HeronClient implements ISelectHandler {
   // It violates what is documented in
   // http://docs.oracle.com/javase/7/docs/api/java/nio/channels/SocketChannel.html#isConnected()
   // Consider it is a JAVA bug
+  // Need volatile?
   private boolean isConnected;
 
   /**
@@ -174,7 +175,7 @@ public abstract class HeronClient implements ISelectHandler {
   // This function doesnt return anything. After this function returns,
   // does not mean that the request actually sent out, merely that the request
   // was successfully queued to be sent out.
-  // Actual send occurs when the socket becomes readable and all prev
+  // Actual send occurs when the socket becomes writable and all prev
   // requests are sent. If the packet cannot be sent
   // out or the request is not retired by the client within the timeout
   // period, the HandleResponse is called with the appropriate status.
@@ -182,6 +183,7 @@ public abstract class HeronClient implements ISelectHandler {
   // The ctx is a user owned piece of context.
   // The response is a MessageBuilder to handle the response from server
   // A negative value of the timeout means no timeout.
+  // This method must be invoked in NIOLoop thread in case of thread safety.
   public void sendRequest(Message request, Object context, Message.Builder responseBuilder,
       long timeoutInSeconds) {
     // Pack it as a no-timeout request and send it!
@@ -204,12 +206,14 @@ public abstract class HeronClient implements ISelectHandler {
   }
 
   // Convenience method of the above method with no timeout or context
+  // This method must be invoked in NIOLoop thread in case of thread safety.
   public void sendRequest(Message request, Message.Builder responseBuilder) {
     sendRequest(request, null, responseBuilder, -1);
   }
 
   // This method is used if you want to communicate with the other end
   // on a non-request-response based communication.
+  // This method must be invoked in NIOLoop thread in case of thread safety.
   public void sendMessage(Message message) {
     OutgoingPacket opk = new OutgoingPacket(REQID.zeroREQID, message);
     socketChannelHelper.sendPacket(opk);
@@ -376,7 +380,7 @@ public abstract class HeronClient implements ISelectHandler {
 
   /////////////////////////////////////////////////////////
   // This is the interface that needs to be implemented by
-  // all Heron Servers.
+  // all Heron Client.
   /////////////////////////////////////////////////////////
 
   // What action do you want to take when the client meets errors

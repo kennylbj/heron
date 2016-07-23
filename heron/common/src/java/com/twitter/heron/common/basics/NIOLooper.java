@@ -51,7 +51,7 @@ public class NIOLooper extends WakeableLooper {
   @Override
   public void doWait() {
     // If timer task exists, the doWait() should wait not later than the time timer to execute
-    // It no timer exists, we consider it will wait forever until other threads call wakeUp()
+    // If no timer exists, we consider it will wait forever until other threads call wakeUp()
     // The nextTimeoutIntervalMs is in milli-seconds
     long nextTimeoutIntervalMs = getNextTimeoutIntervalMs();
 
