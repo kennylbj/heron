@@ -52,15 +52,12 @@ public abstract class WakeableLooper {
   // We will also multiple 1000*1000 to convert mill-seconds to nano-seconds
   private static final long INFINITE_FUTURE = Integer.MAX_VALUE;
   private volatile boolean exitLoop;
-  // The looper created thread id.
-  private final long tid;
 
   public WakeableLooper() {
     exitLoop = false;
     tasksOnWakeup = new ArrayList<Runnable>();
     timers = new PriorityQueue<TimerTask>();
     exitTasks = new ArrayList<>();
-    tid = Thread.currentThread().getId();
   }
 
   public void loop() {
@@ -105,12 +102,11 @@ public abstract class WakeableLooper {
     registerTimerEventInNanoSeconds(timerInSeconds * Constants.SECONDS_TO_NANOSECONDS, task);
   }
 
-  // We must guarantee that this method only be inveked in NIOLooper thread
+  // We must guarantee that this method only be inveked in NIOLooper' loop() thread
   // since timers is never being synchronized.
   public void registerTimerEventInNanoSeconds(long timerInNanoSecnods, Runnable task) {
     assert timerInNanoSecnods >= 0;
     assert task != null;
-    assertInLoopThread();
     long expirationNs = System.nanoTime() + timerInNanoSecnods;
     timers.add(new TimerTask(expirationNs, task));
   }
@@ -120,16 +116,6 @@ public abstract class WakeableLooper {
     wakeUp();
   }
 
-  public boolean isInLoopThread() {
-    return tid == Thread.currentThread().getId();
-  }
-
-  public void assertInLoopThread() {
-    if (!isInLoopThread()) {
-      throw new IllegalStateException("Wakeable Looper was created in thread " + tid
-          + " , current thread id is " + Thread.currentThread().getId());
-    }
-  }
 
   /**
    * Get the timeout in milli-seconds which should be used in doWait().

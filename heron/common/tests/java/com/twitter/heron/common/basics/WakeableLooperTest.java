@@ -16,7 +16,6 @@ package com.twitter.heron.common.basics;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.concurrent.CountDownLatch;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -259,43 +258,6 @@ public class WakeableLooperTest {
 
     Assert.assertEquals(10, globalValue);
   }
-
-  /**
-   * Method: isInLoopThread()
-   */
-  @Test
-  public void testIsInLoopThread() throws Exception {
-    final CountDownLatch cdl = new CountDownLatch(1);
-    Runnable r = new Runnable() {
-      @Override
-      public void run() {
-        Assert.assertFalse(slaveLooper.isInLoopThread());
-        cdl.countDown();
-      }
-    };
-    new Thread(r).start();
-    cdl.await();
-    Assert.assertTrue(slaveLooper.isInLoopThread());
-  }
-
-  /**
-   * Method: assertInLoopThread()
-   */
-  @Test(expected = IllegalStateException.class)
-  public void testAssertInLoopThread() throws Exception {
-    final CountDownLatch cdl = new CountDownLatch(1);
-    Runnable r = new Runnable() {
-      @Override
-      public void run() {
-        slaveLooper = new SlaveLooper();
-        cdl.countDown();
-      }
-    };
-    new Thread(r).start();
-    cdl.await();
-    slaveLooper.registerTimerEventInSeconds(0, r);
-  }
-
 
 }
 

@@ -74,7 +74,6 @@ public class Slave implements Runnable, AutoCloseable {
     Runnable handleControlMessageTask = new Runnable() {
       @Override
       public void run() {
-        //what if inControlQueue is empty while run task in slave loop?
         while (!inControlQueue.isEmpty()) {
           InstanceControlMsg instanceControlMsg = inControlQueue.poll();
 
